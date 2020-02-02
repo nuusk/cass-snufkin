@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"fmt"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -9,6 +10,20 @@ import (
 
 var cluster *gocql.ClusterConfig
 var session *gocql.Session
+
+func initBidTable() {
+	query := "CREATE TABLE bids (auctionId text, time timestamp, bid double, bidderId text, PRIMARY KEY(auctionId, time, bidderId))"
+	if err := session.Query(query).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func dropBidTable() {
+	query := "DROP TABLE bids"
+	if err := session.Query(query).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
 
 func bid(bidAmount int) {
 	auctionId := "1"
@@ -20,6 +35,15 @@ func bid(bidAmount int) {
 	}
 }
 
+func refresh() {
+	var maxBidAmount float64
+
+	if err := session.Query(`SELECT MAX(bid) from bids`).Consistency(gocql.One).Scan(&maxBidAmount); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Max Bid Amount:", maxBidAmount)
+}
 
 func main() {
 	// connect to the cluster
@@ -29,14 +53,15 @@ func main() {
 	session, _ = cluster.CreateSession()
 	defer session.Close()
 
-	bid(4);
+	// dropBidTable()
+	// initBidTable()
 
+	bid(4)
+	bid(3)
+	bid(7)
+	bid(1)
 
-	// // insert a tweet
-	// if err := session.Query(`INSERT INTO tweet (timeline, id, text) VALUES (?, ?, ?)`,
-	// 	"me", gocql.TimeUUID(), "hello world").Exec(); err != nil {
-	// 	log.Fatal(err)
-	// }
+	refresh()
 
 	// var id gocql.UUID
 	// var text string
