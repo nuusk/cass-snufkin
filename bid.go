@@ -11,20 +11,6 @@ import (
 var cluster *gocql.ClusterConfig
 var session *gocql.Session
 
-func initBidTable() {
-	query := "CREATE TABLE bids (auctionId text, time timestamp, bid double, bidderId text, PRIMARY KEY(auctionId, time, bidderId))"
-	if err := session.Query(query).Exec(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func dropBidTable() {
-	query := "DROP TABLE bids"
-	if err := session.Query(query).Exec(); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func bid(bidAmount int) {
 	auctionId := "1"
 	bidderId := "1"
@@ -46,6 +32,7 @@ func refresh() {
 }
 
 func main() {
+	refreshFinished := make(chan bool)
 	// connect to the cluster
 	cluster = gocql.NewCluster("127.0.0.1")
 	cluster.Keyspace = "example"
@@ -53,16 +40,22 @@ func main() {
 	session, _ = cluster.CreateSession()
 	defer session.Close()
 
-	// dropBidTable()
-	// initBidTable()
-
 	bid(4)
 	bid(3)
 	bid(7)
 	bid(1)
 
-	refresh()
+	go func(refreshFinished chan bool) {
+		for {
+				time.Sleep(1 * time.Second)
+				refresh()
+		}
+		refreshFinished <- true
+	}(refreshFinished)
 
+	<- refreshFinished
+
+	
 	// var id gocql.UUID
 	// var text string
 
@@ -77,9 +70,7 @@ func main() {
 
 	// // list all tweets
 	// iter := session.Query(`SELECT id, text FROM tweet WHERE timeline = ?`, "me").Iter()
-	// for iter.Scan(&id, &text) {
-	// 	fmt.Println("Tweet:", id, text)
-	// }
+
 	// if err := iter.Close(); err != nil {
 	// 	log.Fatal(err)
 	// }
