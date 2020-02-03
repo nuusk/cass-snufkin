@@ -13,10 +13,10 @@ var session *gocql.Session
 func populateItemTable() {
 	query := `
 		BEGIN BATCH
-		INSERT INTO items (userId, itemName, itemStartingPrice) values ('qwe', 'item rgd gfhwr', 0);
-		INSERT INTO items (userId, itemName, itemStartingPrice) values ('qwe', 'item 4rwkgfsfd', 0);
-		INSERT INTO items (userId, itemName, itemStartingPrice) values ('qwe', 'item fdmvbrwrf', 0);
-		INSERT INTO items (userId, itemName, itemStartingPrice) values ('asd', 'item 5teddfkdd', 0);
+		INSERT INTO pouches (userId, itemName, itemStartingPrice) values ('qwe', 'item rgd gfhwr', 0);
+		INSERT INTO pouches (userId, itemName, itemStartingPrice) values ('qwe', 'item 4rwkgfsfd', 0);
+		INSERT INTO pouches (userId, itemName, itemStartingPrice) values ('qwe', 'item fdmvbrwrf', 0);
+		INSERT INTO pouches (userId, itemName, itemStartingPrice) values ('asd', 'item 5teddfkdd', 0);
 		APPLY BATCH;
 	`
 

@@ -73,11 +73,12 @@ func main() {
 	defer session.Close()
 
 	actions := []action{
-		{Description: "Inventory", Id: 0},
+		{Description: "Pouch", Id: 0},
 		{Description: "Place an auction", Id: 1},
 		{Description: "Exhibit a charity", Id: 2},
-		{Description: "Help", Id: 3},
-		{Description: "Quit", Id: 4},
+		{Description: "Explore", Id: 3},
+		{Description: "Help", Id: 4},
+		{Description: "Quit", Id: 5},
 	}
 
 	templates := &promptui.SelectTemplates{
@@ -105,7 +106,7 @@ func main() {
 			Label: "What do you want to do?",
 			Items: actions,
 			Templates: templates,
-			Size:      5,
+			Size:      6,
 		}
 	
 		_, result, err := prompt.Run()
