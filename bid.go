@@ -46,7 +46,7 @@ func getBalance(userId string) float64 {
 	var amount float64
 
 	if err := session.Query(`SELECT SUM(amount) from transactions WHERE userId=?`, userId).Consistency(gocql.One).Scan(&amount); err != nil {
-		fmt.Println("$:", amount)
+		log.Fatal(err)
 	}
 
 	return amount
@@ -220,11 +220,9 @@ func main() {
 						refreshFinished <- true
 					}(refreshFinished)
 
-					go simulateUserInAuction(mainUserId, item, bidFinished)
-					go simulateUserInAuction(mainUserId, item, bidFinished)
-					go simulateUserInAuction(mainUserId, item, bidFinished)
-					go simulateUserInAuction(mainUserId, item, bidFinished)
-					go simulateUserInAuction(mainUserId, item, bidFinished)
+					for i := 1; i < 5; i++ {
+						go simulateUserInAuction(mainUserId, item, bidFinished)
+					}
 
 					<- refreshFinished
 					<- bidFinished
