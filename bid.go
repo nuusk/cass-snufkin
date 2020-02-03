@@ -1,16 +1,15 @@
 package main
 
 import (
-	"log"
 	"fmt"
-	"time"
+	"log"
 	"math/rand"
-	"strconv"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/satori/go.uuid"
 	"github.com/manifoldco/promptui"
 )
 
@@ -26,8 +25,8 @@ var session *gocql.Session
 var simulationActive bool
 
 func remove(s []string, i int) []string {
-    s[len(s)-1], s[i] = s[i], s[len(s)-1]
-    return s[:len(s)-1]
+	s[len(s)-1], s[i] = s[i], s[len(s)-1]
+	return s[:len(s)-1]
 }
 
 func initSnufkins() {
@@ -104,11 +103,13 @@ func getBalance(userId string) float64 {
 
 func getPouch(userId string) string {
 	var item string
-	
+
 	iter := session.Query(`SELECT itemName from pouches WHERE userId=? LIMIT 1`, userId).Consistency(gocql.Quorum).Iter()
-	
+
 	for iter.Scan(&item) {
-		if item != "" {return item}
+		if item != "" {
+			return item
+		}
 	}
 
 	return "<empty>"
@@ -120,7 +121,7 @@ func clearScreen() {
 
 type action struct {
 	Description string
-	Id int
+	Id          int
 }
 
 func isActive() bool {
@@ -139,12 +140,12 @@ func simulateUserInAuction(snufkinId string, auctionId string, itemName string, 
 	var simulationActive bool = isActive()
 
 	for simulationActive {
-			simulationActive = isActive()
-			bidAmount := r1.Intn(maxRandomBidAmount)
+		simulationActive = isActive()
+		bidAmount := r1.Intn(maxRandomBidAmount)
 
-			bid(auctionId, itemName, snufkinId, bidAmount)
-			fmt.Println(snufkinId, "biddig", bidAmount)
-			time.Sleep(BID_INTERVAL_MS * time.Millisecond)
+		bid(auctionId, itemName, snufkinId, bidAmount)
+		fmt.Println(snufkinId, "biddig", bidAmount)
+		time.Sleep(BID_INTERVAL_MS * time.Millisecond)
 	}
 	bidFinished <- true
 }
@@ -156,12 +157,12 @@ func simulateUserInExhibition(snufkinId string, auctionId string, itemName strin
 	var simulationActive bool = isActive()
 
 	for simulationActive {
-			simulationActive = isActive()
-			bidAmount := r1.Intn(maxRandomBidAmount)
+		simulationActive = isActive()
+		bidAmount := r1.Intn(maxRandomBidAmount)
 
-			bid(auctionId, itemName, snufkinId, bidAmount)
-			fmt.Println(snufkinId, "biddig", bidAmount)
-			time.Sleep(BID_INTERVAL_MS * time.Millisecond)
+		bid(auctionId, itemName, snufkinId, bidAmount)
+		fmt.Println(snufkinId, "biddig", bidAmount)
+		time.Sleep(BID_INTERVAL_MS * time.Millisecond)
 	}
 	bidFinished <- true
 }
@@ -183,7 +184,7 @@ func endAuction(itemName string) {
 		m = &map[string]interface{}{}
 		currentBid, _ = strconv.ParseFloat(fmt.Sprint(ret[0]["bid"]), 64)
 		currentBidderId = fmt.Sprint(ret[0]["bidderid"])
-		if (currentBid > maxBid) {
+		if currentBid > maxBid {
 			maxBid = currentBid
 			winnerId = currentBidderId
 			vendorId = fmt.Sprint(ret[0]["auctionid"])
@@ -275,19 +276,19 @@ func main() {
 	for {
 
 		prompt := promptui.Select{
-			Label: "What do you want to do?",
-			Items: actions,
+			Label:     "What do you want to do?",
+			Items:     actions,
 			Templates: templates,
 			Size:      7,
 		}
-	
+
 		actionId, _, err := prompt.Run()
-	
+
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
-	
+
 		clearScreen()
 
 		switch actionId {
@@ -299,11 +300,11 @@ func main() {
 		case 1:
 			clearScreen()
 			item := getPouch(mainUserId)
-			if (item != "<empty>") {
+			if item != "<empty>" {
 				fmt.Println("Do you want to sell:", item, "?")
-				
+
 				prompt := promptui.Prompt{
-					Label:  "(Y/n)",
+					Label: "(Y/n)",
 				}
 
 				result, err := prompt.Run()
@@ -313,10 +314,9 @@ func main() {
 					return
 				}
 
-				if (result == "" || strings.ToLower(result) == "y") {
+				if result == "" || strings.ToLower(result) == "y" {
 					// simulate an auction
 					fmt.Println("Simulating an auction...")
-
 
 					go func() {
 						setActive(true)
@@ -326,8 +326,8 @@ func main() {
 
 					go func(refreshFinished chan bool) {
 						for simulationActive {
-								refresh()
-								time.Sleep(REFRESH_TIMES_MS * time.Millisecond)
+							refresh()
+							time.Sleep(REFRESH_TIMES_MS * time.Millisecond)
 						}
 						refreshFinished <- true
 					}(refreshFinished)
@@ -336,27 +336,27 @@ func main() {
 						go simulateUserInAuction(snufkins[i], mainUserId, item, bidFinished)
 					}
 
-					<- refreshFinished
-					<- bidFinished
-					
+					<-refreshFinished
+					<-bidFinished
+
 					endAuction(item)
 				} else {
-					break;
+					break
 				}
 			} else {
 				fmt.Println("Your pouch is empty!")
-				break;
+				break
 			}
 		case 2:
 			clearScreen()
 			item := getPouch(mainUserId)
-			if (item != "<empty>") {
+			if item != "<empty>" {
 				fmt.Println("Who is this exhibition for?")
-				
+
 				printSnufkins()
 
 				prompt := promptui.Prompt{
-					Label:  "Choose index (or c to cancel):",
+					Label: "Choose index (or c to cancel):",
 				}
 
 				result, err := prompt.Run()
@@ -368,8 +368,8 @@ func main() {
 
 				fmt.Println(result)
 
-				if (strings.ToLower(result) == "c") {
-					break;
+				if strings.ToLower(result) == "c" {
+					break
 				} else {
 					chosenSnufkinIndex, _ := strconv.Atoi(result)
 					chosenSnufkin := snufkins[chosenSnufkinIndex]
@@ -384,8 +384,8 @@ func main() {
 
 					go func(refreshFinished chan bool) {
 						for simulationActive {
-								refresh()
-								time.Sleep(REFRESH_TIMES_MS * time.Millisecond)
+							refresh()
+							time.Sleep(REFRESH_TIMES_MS * time.Millisecond)
 						}
 						refreshFinished <- true
 					}(refreshFinished)
@@ -394,14 +394,14 @@ func main() {
 						go simulateUserInExhibition(snufkins[i], mainUserId, item, bidFinished)
 					}
 
-					<- refreshFinished
-					<- bidFinished
-					
+					<-refreshFinished
+					<-bidFinished
+
 					endExhibition(item, chosenSnufkin)
 				}
 			} else {
 				fmt.Println("Your pouch is empty!")
-				break;
+				break
 			}
 		case 3:
 			clearScreen()
