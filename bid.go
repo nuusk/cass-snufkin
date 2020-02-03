@@ -6,7 +6,7 @@ import (
 	"time"
 	"math/rand"
 	"strconv"
-
+	"os"
 
 	"github.com/gocql/gocql"
 	"github.com/satori/go.uuid"
@@ -50,6 +50,10 @@ func showWallet(userId string) {
 	}
 
 	fmt.Println("$:", amount)
+}
+
+func clearScreen() {
+	print("\033[H\033[2J")
 }
 
 type action struct {
@@ -109,16 +113,21 @@ func main() {
 			Size:      6,
 		}
 	
-		_, result, err := prompt.Run()
+		actionId, _, err := prompt.Run()
 	
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 	
-		print("\033[H\033[2J")
+		clearScreen()
 
-		fmt.Printf("You choose %q\n", result)
+		switch actionId {
+		case 0:
+			fmt.Println("OS X.")
+		case 5:
+			os.Exit(3)
+		}
 	}
 
 	go func() {
