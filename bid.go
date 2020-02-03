@@ -42,14 +42,26 @@ func refresh() {
 	fmt.Println("Max Bid Amount:", maxBidAmount)
 }
 
-func showWallet(userId string) {
+func getBalance(userId string) float64 {
 	var amount float64
 
 	if err := session.Query(`SELECT SUM(amount) from transactions WHERE userId=?`, userId).Consistency(gocql.One).Scan(&amount); err != nil {
-		log.Fatal(err)
+		fmt.Println("$:", amount)
 	}
 
-	fmt.Println("$:", amount)
+	return amount
+}
+
+func getPouch(userId string) string {
+	var item string
+	
+	iter := session.Query(`SELECT itemName from pouches WHERE userId=? LIMIT 1`, userId).Consistency(gocql.Quorum).Iter()
+	
+	for iter.Scan(&item) {
+		if item != "" {return item}
+	}
+
+	return "<empty>"
 }
 
 func clearScreen() {
@@ -68,6 +80,7 @@ func main() {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 	maxRandomBidAmount := 10000
+	mainUserId := uuid.Must(uuid.NewV4()).String()
 
 	// connect to the cluster
 	cluster = gocql.NewCluster("127.0.0.1")
@@ -124,7 +137,10 @@ func main() {
 
 		switch actionId {
 		case 0:
-			fmt.Println("OS X.")
+			item := getPouch(mainUserId)
+			fmt.Println("Your pouch:", item)
+			balance := getBalance(mainUserId)
+			fmt.Println("$:", balance)
 		case 5:
 			os.Exit(3)
 		}
@@ -227,5 +243,5 @@ func main() {
 	transaction(winnerId, -maxBid)
 	transaction(vendorId, maxBid)
 
-	showWallet(vendorId)
+	getBalance(vendorId)
 }
