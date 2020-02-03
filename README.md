@@ -35,9 +35,9 @@ create keyspace snufkin with replication = { 'class' : 'SimpleStrategy', 'replic
 
 Create tables using one of the following
 ```
-    CREATE TABLE bids (auctionId text, itemName text, time timestamp, bid double, bidderId text, PRIMARY KEY((auctionId, bidderId, itemName), time));
-    CREATE TABLE transactions (userId text, time timestamp, amount double, PRIMARY KEY(userId, time));
-    CREATE TABLE pouches (userId text, itemName text, itemStartingPrice double, PRIMARY KEY(userId));
+CREATE TABLE bids (auctionId text, itemName text, time timestamp, bid double, bidderId text, PRIMARY KEY((auctionId, bidderId, itemName), time));
+CREATE TABLE transactions (userId text, time timestamp, amount double, PRIMARY KEY(userId, time));
+CREATE TABLE pouches (userId text, itemName text, itemStartingPrice double, PRIMARY KEY(userId));
 ```
 
 ```
