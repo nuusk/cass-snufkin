@@ -50,25 +50,28 @@ The main difference between an auction and an exhibition is that auction only ap
 
 ## Getting started
 
-Create keyspace for the project
+1. Create keyspace for the project
 ```
 create keyspace snufkin with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 };
 ```
 
-Create tables using one of the following
+2. Create tables using one of the following
+
+You can do that in `cqlsh` with
 ```
 CREATE TABLE bids (auctionId text, itemName text, time timestamp, bid double, bidderId text, PRIMARY KEY((auctionId, bidderId, itemName), time));
 CREATE TABLE transactions (userId text, time timestamp, amount double, PRIMARY KEY(userId, time));
 CREATE TABLE pouches (userId text, itemName text, itemStartingPrice double, PRIMARY KEY(userId));
 ```
+or by running this script:
 
 ```
 go run helpers/init.go
 ```
 
-Configure your *Cassandra cluster* and set up the connection in `bid.go` by changing *ip address* in ```cluster = gocql.NewCluster("127.0.0.1")```
+3. Configure your *Cassandra cluster* and set up the connection in `bid.go` by changing *ip address* in ```cluster = gocql.NewCluster("127.0.0.1")```
 
-After all this set up, run the program with
+4. After all this set up, run the program with
 ```
 go run bid.go
 ```
