@@ -14,9 +14,25 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+var NUM_SNUFKINS = 4
+var snufkins []string
+
 var cluster *gocql.ClusterConfig
 var session *gocql.Session
 var simulationActive bool
+
+func initSnufkins() {
+	for i := 0; i < NUM_SNUFKINS; i++ {
+		newId := uuid.Must(uuid.NewV4()).String()
+		snufkins = append(snufkins, newId)
+	}
+}
+
+func printSnufkins() {
+	for i := 0; i < NUM_SNUFKINS; i++ {
+		fmt.Println(snufkins[i])
+	}
+}
 
 func bid(auctionId string, itemName string, bidderId string, bidAmount int) {
 	if err := session.Query(`INSERT INTO bids (auctionId, itemName, time, bid, bidderId) VALUES (?, ?, ?, ?, ?)`,
@@ -79,22 +95,21 @@ func isActive() bool {
 
 func setActive(toggle bool) {
 	simulationActive = toggle
-	fmt.Println("setting to", simulationActive)
+	fmt.Println("Simulation state changed to", simulationActive)
 }
 
-func simulateUserInAuction(auctionId string, itemName string, bidFinished chan bool) {
+func simulateUserInAuction(snufkinId string, auctionId string, itemName string, bidFinished chan bool) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 	maxRandomBidAmount := 10000
-	id := uuid.Must(uuid.NewV4()).String()
 	var simulationActive bool = isActive()
 
 	for simulationActive {
 			simulationActive = isActive()
 			bidAmount := r1.Intn(maxRandomBidAmount)
 
-			bid(auctionId, itemName, id, bidAmount)
-			fmt.Println(id, "biddig", bidAmount)
+			bid(auctionId, itemName, snufkinId, bidAmount)
+			fmt.Println(snufkinId, "biddig", bidAmount)
 			time.Sleep(200 * time.Millisecond)
 	}
 	bidFinished <- true
@@ -132,17 +147,15 @@ func endAuction(itemName string) {
 }
 
 func main() {
+	initSnufkins()
 	refreshFinished := make(chan bool)
 	bidFinished := make(chan bool)
-	// s1 := rand.NewSource(time.Now().UnixNano())
-	// r1 := rand.New(s1)
-	// maxRandomBidAmount := 10000
-	mainUserId := uuid.Must(uuid.NewV4()).String()
+	mainUserId := snufkins[0]
 
 	// connect to the cluster
 	cluster = gocql.NewCluster("127.0.0.1")
 	cluster.Keyspace = "snufkin"
-	cluster.Consistency = gocql.Quorum
+	cluster.Consistency = gocql.One
 	session, _ = cluster.CreateSession()
 	defer session.Close()
 
@@ -153,6 +166,7 @@ func main() {
 		{Description: "Explore", Id: 3},
 		{Description: "Help", Id: 4},
 		{Description: "Quit", Id: 5},
+		{Description: "Show snufkins", Id: 6},
 	}
 
 	templates := &promptui.SelectTemplates{
@@ -167,7 +181,7 @@ func main() {
 			Label: "What do you want to do?",
 			Items: actions,
 			Templates: templates,
-			Size:      6,
+			Size:      7,
 		}
 	
 		actionId, _, err := prompt.Run()
@@ -220,54 +234,14 @@ func main() {
 						refreshFinished <- true
 					}(refreshFinished)
 
-					for i := 1; i < 5; i++ {
-						go simulateUserInAuction(mainUserId, item, bidFinished)
+					for i := 1; i < NUM_SNUFKINS; i++ {
+						go simulateUserInAuction(snufkins[i], mainUserId, item, bidFinished)
 					}
 
 					<- refreshFinished
 					<- bidFinished
 					
 					endAuction(item)
-
-					// go func(bidFinished chan bool) {
-					// 	id := uuid.Must(uuid.NewV4()).String()
-						
-					// 	for simulationActive {
-					// 			bidAmount := r1.Intn(maxRandomBidAmount)
-				
-					// 			bid(id, bidAmount)
-					// 			fmt.Println(id, "bidding", bidAmount)
-					// 			time.Sleep(200 * time.Millisecond)
-					// 	}
-					// 	bidFinished <- true
-					// }(bidFinished)
-				
-					// go func(bidFinished chan bool) {
-					// 	id := uuid.Must(uuid.NewV4()).String()
-						
-					// 	for simulationActive {
-					// 			bidAmount := r1.Intn(maxRandomBidAmount)
-				
-					// 			bid(id, bidAmount)
-					// 			fmt.Println(id, "bidding", bidAmount)
-					// 			time.Sleep(200 * time.Millisecond)
-					// 	}
-					// 	bidFinished <- true
-					// }(bidFinished)
-				
-					// go func(bidFinished chan bool) {
-					// 	id := uuid.Must(uuid.NewV4()).String()
-						
-					// 	for simulationActive {
-					// 			bidAmount := r1.Intn(maxRandomBidAmount)
-				
-					// 			bid(id, bidAmount)
-					// 			fmt.Println(id, "bidding", bidAmount)
-					// 			time.Sleep(200 * time.Millisecond)
-					// 	}
-					// 	bidFinished <- true
-					// }(bidFinished)
-
 				} else {
 					break;
 				}
@@ -277,6 +251,8 @@ func main() {
 			}
 		case 5:
 			os.Exit(3)
+		case 6:
+			printSnufkins()
 		}
 	}
 }
