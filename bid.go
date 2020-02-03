@@ -23,6 +23,13 @@ func bid(bidderId string, bidAmount int) {
 	}
 }
 
+func transaction(userId string, amount float64) {
+	if err := session.Query(`INSERT INTO transactions (userId, time, amount) VALUES (?, ?, ?)`,
+		userId, time.Now(), float64(amount)).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func refresh() {
 	var maxBidAmount float64
 
@@ -31,6 +38,16 @@ func refresh() {
 	}
 
 	fmt.Println("Max Bid Amount:", maxBidAmount)
+}
+
+func showWallet(userId string) {
+	var amount float64
+
+	if err := session.Query(`SELECT SUM(amount) from transactions WHERE userId=?`, userId).Consistency(gocql.One).Scan(&amount); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("$:", amount)
 }
 
 func main() {
@@ -119,24 +136,14 @@ func main() {
 
 	fmt.Println("end")
 
-	// var winnerBid float64
-	// var winnerId string
-	// if err := session.Query(`SELECT MAX(bid) from bids`).Consistency(gocql.Quorum).Scan(&winnerBid); err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println("Max Bid:", winnerBid)
-
-	// var bidderId string
-	// var bid float64
 	results := session.Query(`SELECT * FROM bids`).Iter()
 	m := &map[string]interface{}{}
 	ret := []map[string]interface{}{}
-	// var winnerId string
-	// var winnerBid float64
 	var maxBid float64
 	var winnerId string
 	var currentBid float64
 	var currentBidderId string
+	var vendorId string
 
 	for results.MapScan(*m) {
 		ret := append(ret, *m)
@@ -146,29 +153,15 @@ func main() {
 		if (currentBid > maxBid) {
 			maxBid = currentBid
 			winnerId = currentBidderId
+			vendorId = fmt.Sprint(ret[0]["auctionid"])
 		}
-		// fmt.Println(ret[0]["bid"])
 	}
 
+	// and the winner is
 	fmt.Println(winnerId, maxBid)
-	
 
-	// var id gocql.UUID
-	// var text string
+	transaction(winnerId, -maxBid)
+	transaction(vendorId, maxBid)
 
-	// /* Search for a specific set of records whose 'timeline' column matches
-	//  * the value 'me'. The secondary index that we created earlier will be
-	//  * used for optimizing the search */
-	// if err := session.Query(`SELECT id, text FROM tweet WHERE timeline = ? LIMIT 1`,
-	// 	"me").Consistency(gocql.One).Scan(&id, &text); err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println("Tweet:", id, text)
-
-	// // list all tweets
-	// iter := session.Query(`SELECT id, text FROM tweet WHERE timeline = ?`, "me").Iter()
-
-	// if err := iter.Close(); err != nil {
-	// 	log.Fatal(err)
-	// }
+	showWallet(vendorId)
 }
