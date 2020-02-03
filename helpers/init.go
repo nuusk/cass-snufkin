@@ -17,14 +17,14 @@ func initBidTable() {
 }
 
 func initTransactionTable() {
-	query := "CREATE TABLE transactions(userId text, time timestamp, amount double, PRIMARY KEY(userId, time));"
+	query := "CREATE TABLE transactions (userId text, time timestamp, amount double, PRIMARY KEY(userId, time));"
 	if err := session.Query(query).Exec(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initItemTable() {
-	query := "CREATE TABLE items(userId text, itemName text, itemStartingPrice double, PRIMARY KEY(userId, itemName))"
+func initPouchTable() {
+	query := "CREATE TABLE pouches (userId text, itemName text, itemStartingPrice double, PRIMARY KEY(userId))"
 	if err := session.Query(query).Exec(); err != nil {
 		log.Fatal(err)
 	}
@@ -40,5 +40,5 @@ func main() {
 
 	initBidTable()
 	initTransactionTable()
-	initItemTable()
+	initPouchTable()
 }

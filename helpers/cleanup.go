@@ -16,8 +16,15 @@ func dropBidTable() {
 	}
 }
 
-func dropItemTable() {
-	query := "DROP TABLE items"
+func dropPouchTable() {
+	query := "DROP TABLE pouches"
+	if err := session.Query(query).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func dropTransactionTable() {
+	query := "DROP TABLE transactions"
 	if err := session.Query(query).Exec(); err != nil {
 		log.Fatal(err)
 	}
@@ -32,5 +39,6 @@ func main() {
 	defer session.Close()
 
 	dropBidTable()
-	dropItemTable()
+	dropPouchTable()
+	dropTransactionTable()
 }
