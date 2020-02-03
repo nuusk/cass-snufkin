@@ -15,12 +15,20 @@ import (
 )
 
 var NUM_SNUFKINS = 4
+var BID_INTERVAL_MS time.Duration = 100
+var REFRESH_TIMES_MS time.Duration = 500
+var AUCTION_TIMER_S time.Duration = 5
 var snufkins []string
 var items []string
 
 var cluster *gocql.ClusterConfig
 var session *gocql.Session
 var simulationActive bool
+
+func remove(s []string, i int) []string {
+    s[len(s)-1], s[i] = s[i], s[len(s)-1]
+    return s[:len(s)-1]
+}
 
 func initSnufkins() {
 	for i := 0; i < NUM_SNUFKINS; i++ {
@@ -37,6 +45,14 @@ func initItems() {
 		"Rare Chest Armor",
 		"Epic Axe of Piter Bird",
 		"Distributed Ice Spell",
+		"Admiral's Hat.",
+		"Angelic Alliance",
+		"Armor of the Damned",
+		"Bow of the Sharpshooter",
+		"Cloak of the Undead King",
+		"Cornucopia",
+		"Elixir of Life",
+		"Power of the Dragon Father",
 	}
 }
 
@@ -128,7 +144,7 @@ func simulateUserInAuction(snufkinId string, auctionId string, itemName string, 
 
 			bid(auctionId, itemName, snufkinId, bidAmount)
 			fmt.Println(snufkinId, "biddig", bidAmount)
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(BID_INTERVAL_MS * time.Millisecond)
 	}
 	bidFinished <- true
 }
@@ -145,7 +161,7 @@ func simulateUserInExhibition(snufkinId string, auctionId string, itemName strin
 
 			bid(auctionId, itemName, snufkinId, bidAmount)
 			fmt.Println(snufkinId, "biddig", bidAmount)
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(BID_INTERVAL_MS * time.Millisecond)
 	}
 	bidFinished <- true
 }
@@ -205,7 +221,9 @@ func endExhibition(itemName string, chosenSnufkin string) {
 
 func findItem(snufkinId string) {
 	rand.Seed(time.Now().UnixNano())
-    foundItem := items[rand.Intn(len(items))]
+	foundItemIndex := rand.Intn(len(items))
+	foundItem := items[foundItemIndex]
+	items = remove(items, foundItemIndex)
 	fmt.Println("Congrats! You found", foundItem)
 
 	if err := session.Query(`INSERT INTO pouches (userId, itemName, itemStartingPrice) VALUES (?, ?, ?)`,
@@ -215,7 +233,7 @@ func findItem(snufkinId string) {
 }
 
 func deleteFromPouch(snufkinId string) {
-	if err := session.Query(`DELETE FROM pouches WHERE id=? IF EXISTS;`,
+	if err := session.Query(`DELETE FROM pouches WHERE userId=? IF EXISTS;`,
 		snufkinId).Exec(); err != nil {
 		log.Fatal(err)
 	}
@@ -253,7 +271,7 @@ func main() {
 	}
 
 	clearScreen()
-	
+
 	for {
 
 		prompt := promptui.Select{
@@ -302,14 +320,14 @@ func main() {
 
 					go func() {
 						setActive(true)
-						time.Sleep(400 * time.Millisecond)
+						time.Sleep(AUCTION_TIMER_S * time.Second)
 						setActive(false)
 					}()
 
 					go func(refreshFinished chan bool) {
 						for simulationActive {
 								refresh()
-								time.Sleep(1 * time.Second)
+								time.Sleep(REFRESH_TIMES_MS * time.Millisecond)
 						}
 						refreshFinished <- true
 					}(refreshFinished)
@@ -360,14 +378,14 @@ func main() {
 
 					go func() {
 						setActive(true)
-						time.Sleep(400 * time.Millisecond)
+						time.Sleep(AUCTION_TIMER_S * time.Second)
 						setActive(false)
 					}()
 
 					go func(refreshFinished chan bool) {
 						for simulationActive {
 								refresh()
-								time.Sleep(1 * time.Second)
+								time.Sleep(REFRESH_TIMES_MS * time.Millisecond)
 						}
 						refreshFinished <- true
 					}(refreshFinished)
