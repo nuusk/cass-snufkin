@@ -16,6 +16,13 @@ func initBidTable() {
 	}
 }
 
+func initUserTable() {
+	query := "CREATE TABLE items(userId text, itemName text, itemStartingPrice double, PRIMARY KEY(userId, itemName))"
+	if err := session.Query(query).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	// connect to the cluster
 	cluster = gocql.NewCluster("127.0.0.1")
@@ -25,4 +32,5 @@ func main() {
 	defer session.Close()
 
 	initBidTable()
+	initUserTable()
 }

@@ -16,6 +16,13 @@ func dropBidTable() {
 	}
 }
 
+func dropItemTable() {
+	query := "DROP TABLE items"
+	if err := session.Query(query).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	// connect to the cluster
 	cluster = gocql.NewCluster("127.0.0.1")
@@ -25,4 +32,5 @@ func main() {
 	defer session.Close()
 
 	dropBidTable()
+	dropItemTable()
 }
