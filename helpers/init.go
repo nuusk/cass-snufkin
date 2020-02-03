@@ -10,7 +10,7 @@ var cluster *gocql.ClusterConfig
 var session *gocql.Session
 
 func initBidTable() {
-	query := "CREATE TABLE bids (auctionId text, time timestamp, bid double, bidderId text, PRIMARY KEY((auctionId, bidderId), time))"
+	query := "CREATE TABLE bids (auctionId text, itemName text, time timestamp, bid double, bidderId text, PRIMARY KEY((auctionId, bidderId, itemName), time))"
 	if err := session.Query(query).Exec(); err != nil {
 		log.Fatal(err)
 	}
